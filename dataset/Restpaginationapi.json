@@ -1,0 +1,13 @@
+{
+	"name": "Restpaginationapi",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Restpagination",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

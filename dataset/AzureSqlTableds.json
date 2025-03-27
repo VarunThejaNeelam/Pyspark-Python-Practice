@@ -1,0 +1,17 @@
+{
+	"name": "AzureSqlTableds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureSqlDatabasels",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "employees"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

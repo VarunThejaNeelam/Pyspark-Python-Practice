@@ -1,0 +1,53 @@
+{
+	"name": "Jsonsource_ds",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"fileSystem": "practice"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"transaction_id": {
+					"type": "string"
+				},
+				"customer_id": {
+					"type": "string"
+				},
+				"amount": {
+					"type": "number"
+				},
+				"currency": {
+					"type": "string"
+				},
+				"transaction_date": {
+					"type": "string"
+				},
+				"status": {
+					"type": "string"
+				},
+				"payment_method": {
+					"type": "string"
+				}
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

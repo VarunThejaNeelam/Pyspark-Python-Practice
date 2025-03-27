@@ -1,0 +1,9 @@
+{
+	"name": "rbcdf",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "893768c0-a852-4e23-9a2d-eb99f0993cdf",
+		"tenantId": "3842298a-0e68-416b-a9bd-0afc21bed8c5"
+	}
+}
