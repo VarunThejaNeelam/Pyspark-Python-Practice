@@ -1,0 +1,153 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "rbcdf"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureSqlDatabasels_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'AzureSqlDatabasels'"
+		},
+		"MySqlls_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'MySqlls'"
+		},
+		"linkedService1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'linkedService1'"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://rbcriskmanage.dfs.core.windows.net/"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "rbcser.database.windows.net"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "rbcdb"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "rbcvarun"
+		},
+		"MySqlls_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "localhost"
+		},
+		"MySqlls_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "dataengineering"
+		},
+		"MySqlls_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "root"
+		},
+		"Restls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://reqres.in/api/users"
+		},
+		"Restpagination_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://pokeapi.co/api/v2/pokemon"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "rbcdf_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"AzureDataLakeStorage1_accountKey": {
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					},
+					"AzureSqlDatabasels_password": {
+						"value": "[parameters('AzureSqlDatabasels_password')]"
+					},
+					"linkedService1_connectionString": {
+						"value": "[parameters('linkedService1_connectionString')]"
+					},
+					"AzureDataLakeStorage1_properties_typeProperties_url": {
+						"value": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]"
+					},
+					"AzureSqlDatabasels_properties_typeProperties_server": {
+						"value": "[parameters('AzureSqlDatabasels_properties_typeProperties_server')]"
+					},
+					"AzureSqlDatabasels_properties_typeProperties_database": {
+						"value": "[parameters('AzureSqlDatabasels_properties_typeProperties_database')]"
+					},
+					"AzureSqlDatabasels_properties_typeProperties_userName": {
+						"value": "[parameters('AzureSqlDatabasels_properties_typeProperties_userName')]"
+					},
+					"Restls_properties_typeProperties_url": {
+						"value": "[parameters('Restls_properties_typeProperties_url')]"
+					},
+					"Restpagination_properties_typeProperties_url": {
+						"value": "[parameters('Restpagination_properties_typeProperties_url')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "rbcdf_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"MySqlls_password": {
+						"value": "[parameters('MySqlls_password')]"
+					},
+					"MySqlls_properties_typeProperties_server": {
+						"value": "[parameters('MySqlls_properties_typeProperties_server')]"
+					},
+					"MySqlls_properties_typeProperties_database": {
+						"value": "[parameters('MySqlls_properties_typeProperties_database')]"
+					},
+					"MySqlls_properties_typeProperties_username": {
+						"value": "[parameters('MySqlls_properties_typeProperties_username')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'rbcdf_ArmTemplate_0')]"
+			]
+		}
+	]
+}

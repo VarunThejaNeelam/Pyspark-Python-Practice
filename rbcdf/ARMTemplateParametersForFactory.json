@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "rbcdf"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabasels_password": {
+			"value": ""
+		},
+		"MySqlls_password": {
+			"value": ""
+		},
+		"linkedService1_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://rbcriskmanage.dfs.core.windows.net/"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_server": {
+			"value": "rbcser.database.windows.net"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_database": {
+			"value": "rbcdb"
+		},
+		"AzureSqlDatabasels_properties_typeProperties_userName": {
+			"value": "rbcvarun"
+		},
+		"MySqlls_properties_typeProperties_server": {
+			"value": "localhost"
+		},
+		"MySqlls_properties_typeProperties_database": {
+			"value": "dataengineering"
+		},
+		"MySqlls_properties_typeProperties_username": {
+			"value": "root"
+		},
+		"Restls_properties_typeProperties_url": {
+			"value": "https://reqres.in/api/users"
+		},
+		"Restpagination_properties_typeProperties_url": {
+			"value": "https://pokeapi.co/api/v2/pokemon"
+		}
+	}
+}
