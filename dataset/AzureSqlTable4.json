@@ -1,17 +1,20 @@
 {
-	"name": "AzureSqlTableds",
+	"name": "AzureSqlTable4",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabasels",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			},
+			"Watermar": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
-		"schema": [],
-		"typeProperties": {
-			"schema": "dbo",
-			"table": "WatermarkTable"
-		}
-	},
-	"type": "Microsoft.DataFactory/factories/datasets"
+		"schema": []
+	}
 }
