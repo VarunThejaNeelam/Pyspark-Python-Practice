@@ -3,36 +3,11 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup1",
-				"type": "Lookup",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "AzureSqlTableds",
-						"type": "DatasetReference"
-					},
-					"firstRowOnly": false
-				}
-			},
-			{
 				"name": "ForEach1",
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Lookup1",
+						"activity": "LookupForWatermarkTable",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -41,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Lookup1').output.value",
+						"value": "@activity('LookupForWatermarkTable').output.value",
 						"type": "Expression"
 					},
 					"activities": [
@@ -108,13 +83,13 @@
 							"type": "Copy",
 							"dependsOn": [
 								{
-									"activity": "LookupForMaxValue",
+									"activity": "LookupForLastProcessedValue",
 									"dependencyConditions": [
 										"Succeeded"
 									]
 								},
 								{
-									"activity": "LookupForLastProcessedValue",
+									"activity": "LookupForMaxValue",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -132,7 +107,7 @@
 								"source": {
 									"type": "AzureSqlSource",
 									"sqlReaderQuery": {
-										"value": "SELECT * \nFROM @{item().TableName}\nWHERE @{item().WatermarkColumn} > @{activity('LookupForLastProcessedValue').output.firstRow.LastProcessedValue}\nAND @{item().WatermarkColumn} <= @{activity('LookupForMaxValue').output.firstRow.latestWaterMark};\n",
+										"value": "SELECT * \nFROM @{item().TableName}\nWHERE @{item().WatermarkColumn} > '@{activity('LookupForLastProcessedValue').output.firstRow.LastProcessedValue}'\nAND @{item().WatermarkColumn} <= '@{activity('LookupForMaxValue').output.firstRow.latestWaterMark}';",
 										"type": "Expression"
 									},
 									"queryTimeout": "02:00:00",
@@ -161,7 +136,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "AzureSqlTable3",
+									"referenceName": "AzureSqlTable5",
 									"type": "DatasetReference"
 								}
 							],
@@ -179,7 +154,7 @@
 							]
 						},
 						{
-							"name": "Stored procedureForUpdateWatermark",
+							"name": "Stored procedureForUpdatingWatermark",
 							"type": "SqlServerStoredProcedure",
 							"dependsOn": [
 								{
@@ -225,213 +200,28 @@
 				}
 			},
 			{
-				"name": "ForEach1_copy1",
-				"type": "ForEach",
+				"name": "LookupForWatermarkTable",
+				"type": "Lookup",
 				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
-					"items": {
-						"value": "@activity('Lookup1').output.value",
-						"type": "Expression"
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
 					},
-					"activities": [
-						{
-							"name": "LookupForLastProcessedValue_copy1",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": {
-										"value": "SELECT LastProcessedValue \nFROM WatermarkTable \nWHERE TableName = '@{item().TableName}'\n",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"dataset": {
-									"referenceName": "lookupforvalue_ds",
-									"type": "DatasetReference"
-								},
-								"firstRowOnly": true
-							}
-						},
-						{
-							"name": "LookupForMaxValue_copy1",
-							"type": "Lookup",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": {
-										"value": "SELECT MAX(WatermarkColumn) as latestWaterMark\nFROM TableName",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"dataset": {
-									"referenceName": "AzureSqlTable3",
-									"type": "DatasetReference",
-									"parameters": {
-										"TableName": {
-											"value": "@item().TableName",
-											"type": "Expression"
-										},
-										"WatermarkColumn": {
-											"value": "@item().WatermarkColumn",
-											"type": "Expression"
-										}
-									}
-								},
-								"firstRowOnly": true
-							}
-						},
-						{
-							"name": "Copy data1_copy1",
-							"type": "Copy",
-							"dependsOn": [
-								{
-									"activity": "LookupForMaxValue_copy1",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								},
-								{
-									"activity": "LookupForLastProcessedValue_copy1",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "AzureSqlSource",
-									"sqlReaderQuery": {
-										"value": "SELECT * FROM TableName\nWHERE WatermarkColumn > @{activity('LookupForLastProcessedValue').output.firstRow.LastProcessedValue } AND WatermarkColumn <= @{activity('LookupForMaxValue').output.firstRow.latestWaterMark}",
-										"type": "Expression"
-									},
-									"queryTimeout": "02:00:00",
-									"partitionOption": "None"
-								},
-								"sink": {
-									"type": "DelimitedTextSink",
-									"storeSettings": {
-										"type": "AzureBlobFSWriteSettings"
-									},
-									"formatSettings": {
-										"type": "DelimitedTextWriteSettings",
-										"quoteAllText": true,
-										"fileExtension": ".txt"
-									}
-								},
-								"enableStaging": false,
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
-							},
-							"inputs": [
-								{
-									"referenceName": "AzureSqlTable3",
-									"type": "DatasetReference",
-									"parameters": {
-										"TableName": {
-											"value": "@item().TableName",
-											"type": "Expression"
-										},
-										"WatermarkColumn": {
-											"value": "@item().WatermarkColumn",
-											"type": "Expression"
-										}
-									}
-								}
-							],
-							"outputs": [
-								{
-									"referenceName": "adlsds",
-									"type": "DatasetReference",
-									"parameters": {
-										"OutputFile": {
-											"value": "@item().TableName",
-											"type": "Expression"
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "Stored procedureForUpdateWatermark_copy1",
-							"type": "SqlServerStoredProcedure",
-							"dependsOn": [
-								{
-									"activity": "Copy data1_copy1",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[dbo].[update_watermark]",
-								"storedProcedureParameters": {
-									"lastProcessedValue": {
-										"value": {
-											"value": "@activity('LookupForMaxValue').output.firstRow.latestWaterMark",
-											"type": "Expression"
-										},
-										"type": "Datetime"
-									},
-									"tablename": {
-										"value": {
-											"value": "@item().TableName",
-											"type": "Expression"
-										},
-										"type": "String"
-									}
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "AzureSqlDatabasels",
-								"type": "LinkedServiceReference"
-							}
-						}
-					]
+					"dataset": {
+						"referenceName": "AzureSqlTableds",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
