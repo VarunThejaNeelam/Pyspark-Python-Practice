@@ -3366,4 +3366,42 @@ print(pipeline_status)
 
 # COMMAND ----------
 
+class PartitionTuning:
+    
+    def __init__(self, spark, cores=20):
+        self.spark = spark
+        self.cores = cores
+        self.target_partition_size = 150  # MB
 
+    def aggregation(self, path):
+        df = self.spark.read.load(path)
+        
+        agg_df = df.groupBy("cust_id").sum("amount")
+        return agg_df
+
+    def tune_and_transform(self, path, partitions):
+        # Set shuffle partitions
+        self.spark.conf.set("spark.sql.shuffle.partitions", int(partitions))
+        
+        print(f"Using {int(partitions)} partitions")
+        
+        return self.aggregation(path)
+
+    def optimize_partitions(self, data_size_gb, path):
+        # Convert GB → MB
+        data_size_mb = data_size_gb * 1024
+
+        # Calculate ideal partitions
+        ideal_partitions = data_size_mb / self.target_partition_size
+
+        # Core-based minimum (important!)
+        min_partitions = self.cores * 2
+
+        # Final partitions decision
+        final_partitions = max(ideal_partitions, min_partitions)
+
+        print(f"Data Size: {data_size_mb} MB")
+        print(f"Ideal Partitions: {ideal_partitions}")
+        print(f"Final Partitions: {int(final_partitions)}")
+
+        return self.tune_and_transform(path, final_partitions)
