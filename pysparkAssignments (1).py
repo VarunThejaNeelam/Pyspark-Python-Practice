@@ -2334,5 +2334,50 @@ employees_agg_data_df.show()
 
 # COMMAND ----------
 
+"""
+Find how the average male height changed between each Olympics from 1896 to 2016.
+Output the Olympics year, average height, previous average height, and the corresponding average height difference.
+Order records by the year in ascending order.
 
 
+If avg height for some year is not found, assume that the average height of athletes for that year  is 172.73.
+"""
+
+
+# COMMAND ----------
+
+olympics_athletes_events_df = spark.read.format("csv").load("/Volumes/raw/olympics_data")
+
+filtered_olympics_df = olympics_athletes_events_df.filter(col("sex") == "M")
+
+# Aggregating average height for each olympic year
+olympics_agg_df = filtered_olympics_df.groupBy("year").agg(
+    avg("height").alias("avg_height")
+)
+
+# Preparing all olympic years 
+years = [(y,) for y in range(1896, 2017, 4)]
+df = spark.createDataFrame(years, ["year"])
+
+# Joining these with agg_df
+joined_df = df.join(olympics_agg_df, on = "year", how="left")
+
+joined_df = joined_df.select(
+    col("year"),
+    coalesce(col("avg_height"), lit(172.73)).alias("avg_height")
+)
+
+# Previous year avgerage height details 
+window_spec = Window.orderBy("year")
+
+olympics_prev_data_df = joined_df.withColumn(
+    "prev_year_avg_height",
+    lag("avg_height").over(window_spec)
+)
+
+avg_height_diff_df = olympics_prev_data_df.withColumn(
+    "avg_height_diff",
+    col("avg_height") - col("prev_year_avg_height")
+)
+
+avg_height_diff_df.show()
