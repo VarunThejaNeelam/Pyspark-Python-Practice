@@ -2309,4 +2309,30 @@ final_result_df.show()
 
 # COMMAND ----------
 
+"""
+Find the ratio between the number of employees without benefits to total employees. Output the job title, number of employees without benefits, total employees relevant to that job title, and the corresponding ratio. Order records based on the ratio in ascending order.
+"""
+
+sf_public_salaries_df = spark.read.format("csv").load("/Volumes/Raw/employeesdata")
+
+# cast column
+sf_public_salaries_df = sf_public_salaries_df.withColumn(
+    "benefits", col("benefits").cast("double")
+)
+
+employees_agg_data_df = sf_public_salaries_df.groupBy("jobtitle").agg(
+    count(when(col("benefits") == 0 | col("benefits").isNull(), True)).alias("Employees_without_benefits"),
+    count("id").alias("total_employees")
+)
+
+employees_agg_data_df = employees_agg_data_df.withColumn(
+    "ratio",
+    col("Employees_without_benefits") / col("total_employees")
+).orderBy(asc("ratio"))
+
+employees_agg_data_df.show()
+
+# COMMAND ----------
+
+
 

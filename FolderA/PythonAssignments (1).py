@@ -3405,3 +3405,174 @@ class PartitionTuning:
         print(f"Final Partitions: {int(final_partitions)}")
 
         return self.tune_and_transform(path, final_partitions)
+
+# COMMAND ----------
+
+class PipelineTriggerError(Exception):
+    def __init__(self, message, file_name):
+        super().__init__(message)
+        self.file_name = file_name
+
+class pipelineFlow:
+
+    def __init__(self, directory):
+        self.directory = directory
+
+    def on_file_arrival(self, file_name):
+        status = None
+        try:
+            files = dbutils.fs.ls(self.directory)
+            for f in files:
+                if f.name == file_name:
+                    status = "Success" 
+                    break
+        except Exception as err:
+            print(f"File not Founded we cannot proceed further {err}")   
+        return status
+
+    def process_pipeline(self, file_name):
+        status = self.on_file_arrival(file_name)
+
+        if status == None:
+            raise PipelineTriggerError(f"These file is not exists we cannot trigger the Pipeline",{file_name})
+        
+        df = spark.read.format("parquet").load(path)
+    
+    
+        agg_df = df.groupBy("customer_id").agg(
+            sum("amount").alias("total_amount")
+        )
+
+        agg_df.write.format("delta").save("/Volumes/CustomersAnalysis/Gold/customersTransactionalData")
+
+        print(f"Pipeline triggered successsfully ")
+   
+
+pipe = pipelineFlow("/Volumes/CustomersAnalysis/Bronze/")
+
+try:
+    pipe.process_pipeline("Customers_transactions")
+except PipelineTriggerError as err:
+    print("Error occured", err)   
+
+
+ 
+
+# COMMAND ----------
+
+"""
+Dynamic Rule-Based Data Routing
+
+Input:
+
+data = [
+ {"id":1,"amount":100,"country":"US"},
+ {"id":2,"amount":-50,"country":"IN"},
+ {"id":3,"amount":500,"country":"US"}
+]
+
+Rules:
+
+rules = {
+ "invalid":"amount < 0",
+ "high_value":"amount > 300",
+ "default":"others"
+}
+
+Task:
+
+Route records into:
+invalid bucket
+high_value bucket
+default bucket
+Use loops + conditions
+Raise exception for invalid records
+Log routing summary
+"""
+
+# COMMAND ----------
+
+import logging
+
+# logging configuration
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s:%(name)s:%(message)s')
+
+file_handler = logging.FileHandler("datavalidations.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
+class InValidDataException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+class DynamicRouting:
+
+    def DataframeCreation(self, data):
+        schema = StructType([
+            StructField("id", IntegerType(), True),
+            StructField("amount", IntegerType(), True),
+            StructField("country", StringType(), True)
+        ])
+
+        df = spark.createDataFrame(data, schema)
+        return df
+
+    def dynamic_routing(self, input):
+        invalid_data = []
+        high_value_data = []
+        valid_data = []
+
+        for row in input:
+            if row["amount"] < 0:
+                invalid_data.append(row)
+                
+            elif row[amount] > 300:
+                high_value_data.append(row)
+                
+            else:
+                valid_data.append(row)        
+                
+
+         # Logging summary
+        logger.info(f"Invalid count: {len(invalid_data)}")
+        logger.info(f"High value count: {len(high_value_data)}")
+        logger.info(f"Valid count: {len(valid_data)}")
+
+        # Raise exception if invalid exists
+        if invalid_data:
+            raise InValidDataException(f"Invalid records found and length of thoose invalid data {len(invalid_data)}")        
+        
+        invalid_data_df = self.DataframeCreation(invalid_data)
+        high_value_data_df = self.DataframeCreation(high_value_data)
+        valid_data_df = self.DataframeCreation(valid_data)
+
+        invalid_data_df.write.format("parquet").save("/Volumes/raw/invalid_data")
+        high_value_data_df.write.format("parquet").save("/Volumes/raw/high_value_data")
+        valid_data_df.write.format("delta").save("/Volumes/raw/valid_data")
+        
+inst = DynamicRouting()
+
+data = [
+ {"id":1,"amount":100,"country":"US"},
+ {"id":2,"amount":-50,"country":"IN"},
+ {"id":3,"amount":500,"country":"US"}
+]
+
+try:
+    inst.dynamic_routing(data)
+except InValidDataException as err:
+    print(f"Error occured {err}")
+
+
+if rules["invalid"](amount):
+    
+"""
+rules = {
+ "invalid": lambda amount: amount < 0,
+ "high_value": lambda amount: amount > 300
+}
+"""
