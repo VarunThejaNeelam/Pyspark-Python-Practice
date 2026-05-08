@@ -3576,3 +3576,206 @@ rules = {
  "high_value": lambda amount: amount > 300
 }
 """
+
+# COMMAND ----------
+
+"""
+Sliding Window Failure Detector
+
+Simulate job runs:
+
+runs = ["SUCCESS","FAILED","FAILED","FAILED","SUCCESS"]
+
+Task:
+
+If 3 consecutive failures → raise:
+RepeatedFailureException
+Use loop with tracking window
+Log each run status
+Stop execution on threshold breach
+"""
+
+# COMMAND ----------
+
+import logging
+
+# logging configuration
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter(
+    '%(asctime)s:%(name)s:%(message)s'
+)
+
+file_handler = logging.FileHandler("jobstatuslogs.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
+
+class RepeatedFailureException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class SlidingWindowFailureDetector:
+
+    def FailureDetector(self, runs):
+
+        cons_count = 0
+        cons_streak_change = 0
+
+        current_state = None
+        prev_state = None
+
+        for run in runs:
+
+            current_state = run
+
+            logger.info(
+                f"Current run status is {current_state}"
+            )
+
+            # Detect state transition
+            if prev_state is not None:
+
+                if prev_state != current_state:
+                    cons_streak_change += 1
+
+                    logger.info(
+                        f"Streak changed "
+                        f"{cons_streak_change} times"
+                    )
+
+            # Failure tracking
+            if current_state == "FAILED":
+
+                cons_count += 1
+
+                logger.info(
+                    f"Failure count is {cons_count}"
+                )
+
+                if cons_count >= 3:
+                    raise RepeatedFailureException(
+                        f"Job repeatedly failed "
+                        f"{cons_count} times"
+                    )
+
+            # Once streak changes more than once
+            # stop processing
+            if cons_streak_change > 1:
+                logger.info(
+                    "Streak changed more than once. "
+                    "Breaking loop."
+                )
+                break
+
+            # Update previous state at END
+            prev_state = current_state
+
+
+inst = SlidingWindowFailureDetector()
+
+runs = [
+    "SUCCESS",
+    "FAILED",
+    "FAILED",
+    "FAILED",
+    "SUCCESS"
+]
+
+try:
+    inst.FailureDetector(runs)
+
+except RepeatedFailureException as err:
+    print(f"Error occurred: {err}")
+
+# COMMAND ----------
+
+import logging
+
+# logging configuration
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter(
+    '%(asctime)s:%(name)s:%(message)s'
+)
+
+file_handler = logging.FileHandler("transformations.log")
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
+
+class UnknownTypeException(Exception):
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class ConfigurableTransformationEngine:
+
+    def __init__(self, target_path):
+        self.target_path = target_path
+
+    def read_data(self, path):
+        df = spark.read.format("parquet").load(path)
+        return df
+
+    def dynamicTransformations(self, transformations, path):
+        df = self.read_data(path) 
+        
+        for transformation in transformations:
+            try:
+                if transformation["type"] == "filter":
+                    condition = transformation["condition"]
+                    df = df.filter(condition)
+                    df.write.format("delta").save(f"{self.target_path}/filtered_df")
+                    logger.info(
+                        f"Applied filter transformation with condition: {condition}"
+                    )
+                elif transformation["type"] == "multiply":
+                    evaluation_col = transformation["column"]
+                    factor = transformation["factor"]
+                    df = df.withColumn(
+                        "amount_multi_factor",
+                        col(evaluation_col) * factor
+                    )    
+                    df.write.format("delta").save(f"{self.target_path}/updated_df")
+                    logger.info(
+                        f"Applied multiply transformation on column : {evaluation_col} with factor{factor}"
+                    )
+                elif transformation["type"] == "aggregation" and transformation["agg_type"] == "sum":
+                    group_by_key = transformation["grp_key"]
+                    agg_col = transformation["agg_col"]
+                    agg_df = df.groupBy(group_by_key).agg(
+                        sum(agg_col).alias("total_aggregated_amount")
+                    )
+                    agg_df.write.format("delta").save(f"{self.target_path}/agg_df")
+                    logger.info(
+                        f"Applied aggregation transformation on column: {agg_col}"
+                    )
+                else:
+                    raise UnknownTypeException(f"Unknown transformation type: {transformation['type']}")  
+            except UnknownTypeException as err:
+                logger.error(f"Error occured {err}")
+            except Exception as err:
+                logger.error(f"Unexpected error: {err}")    
+
+inst = ConfigurableTransformationEngine("/Volumes/rbc/final")        
+
+transformations = [
+ {"type":"filter","condition":"amount > 100"},
+ {"type":"multiply","column":"amount","factor":2},
+ {"type":"aggregation", "grp_key": "cust_id", "agg_type": "sum", "agg_col": "amount"} 
+]
+
+
+inst.dynamicTransformations(transformations, "/Volumes/rbc/raw/customers")
+
+            
+
+# COMMAND ----------
+
+
