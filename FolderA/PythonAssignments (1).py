@@ -3778,4 +3778,76 @@ inst.dynamicTransformations(transformations, "/Volumes/rbc/raw/customers")
 
 # COMMAND ----------
 
+"""
+Multi-Level Aggregation Engine
+
+Input:
+
+data = [
+ {"region":"APAC","product":"A","amount":100},
+ {"region":"APAC","product":"A","amount":200},
+ {"region":"US","product":"B","amount":300}
+]
+
+Task:
+
+Aggregate:
+region level
+region + product level
+Use nested loops or dict logic
+Handle missing keys via exception
+"""
+
+# COMMAND ----------
+
+class MissingKeyException(Exception):
+
+    def __init__(self, message):
+        super().__init__(message)
+
+class MultiLevelAggregationEngine:
+
+    def multiAggregations(self, data):
+        multi_agg = {}
+        for obj in data:
+            try:
+                if "region" not in obj:
+                    raise MissingKeyException("The key region is missing")
+                elif "product" not in obj:
+                    raise MissingKeyException("The key product is missing")
+                elif "amount" not in obj:
+                    raise MissingKeyException("The key amount is missing")
+
+                # Prepare keys
+                region_key = obj["region"]
+                region_product_key = obj["region"] + "," + obj["product"]
+
+                # Region Level Aggregation
+                if region_key not in multi_agg:
+                    multi_agg[region_key] = obj["amount"]
+                else:
+                    multi_agg[region_key] += obj["amount"]
+
+                # Region + Product Level Aggregation
+                if region_product_key not in multi_agg:
+                    multi_agg[region_product_key] = obj["amount"]
+                else:
+                    multi_agg[region_product_key] += obj["amount"]
+                        
+            except MissingKeyException as err:
+                print(f"Error occured {err}")
+
+        return multi_agg
+
+
+multi_inst = MultiLevelAggregationEngine()
+
+data = [
+ {"region":"APAC","product":"A","amount":100},
+ {"region":"APAC","product":"A","amount":200},
+ {"region":"US","product":"B","amount":300}
+]
+
+result = multi_inst.multiAggregations(data)
+print(result)
 
